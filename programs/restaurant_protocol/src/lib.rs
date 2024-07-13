@@ -52,4 +52,19 @@ pub mod restaurant_protocol {
     pub fn remove_inventory(ctx: Context<InventoryRemove>) -> Result<()> {
         ctx.accounts.remove()
     }
+
+    pub fn add_menu_item(ctx: Context<MenuAdd>, 
+        sku: u64,
+        category: Pubkey,
+        name: String,
+        price: f64,
+        ingredients: Vec<String>,
+        active: bool,
+    ) -> Result<()> {
+        ctx.accounts.add(sku, category, name, price, ingredients, active)
+    }
+
+    pub fn remove_menu_item(ctx: Context<MenuRemove>) -> Result<()> {
+        ctx.accounts.remove()
+    }
 }

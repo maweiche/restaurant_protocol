@@ -9,3 +9,6 @@ pub use employee::*;
 
 pub mod inventory;
 pub use inventory::*;
+
+pub mod menu;
+pub use menu::*;
