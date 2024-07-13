@@ -28,4 +28,14 @@ pub mod restaurant_protocol {
     pub fn remove_admin_account(ctx: Context<AdminRemove>) -> Result<()> {
         ctx.accounts.remove_admin()
     }
+
+    pub fn initialize_employee_account(ctx: Context<EmployeeInit>, 
+        username: String
+    ) -> Result<()> {
+        ctx.accounts.initialize_employee(username)
+    }
+
+    pub fn remove_employee_account(ctx: Context<EmployeeRemove>) -> Result<()> {
+        ctx.accounts.remove_employee()
+    }
 }

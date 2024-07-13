@@ -20,3 +20,14 @@ pub struct Admin {
 impl Space for Admin {
     const INIT_SPACE: usize = 8 + 32 + 4 + 8;
 }
+
+#[account]
+pub struct Employee {
+    pub publickey: Pubkey,
+    pub username: String,
+    pub initialized: i64,
+}
+
+impl Space for Employee {
+    const INIT_SPACE: usize = 8 + 32 + 4 + 8;
+}
