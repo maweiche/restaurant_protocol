@@ -38,4 +38,18 @@ pub mod restaurant_protocol {
     pub fn remove_employee_account(ctx: Context<EmployeeRemove>) -> Result<()> {
         ctx.accounts.remove_employee()
     }
+
+    pub fn add_inventory(ctx: Context<InventoryAdd>, 
+        sku: u64,
+        category: Pubkey,
+        name: String,
+        price: f64,
+        stock: f64,
+    ) -> Result<()> {
+        ctx.accounts.add(sku, category, name, price, stock)
+    }
+
+    pub fn remove_inventory(ctx: Context<InventoryRemove>) -> Result<()> {
+        ctx.accounts.remove()
+    }
 }

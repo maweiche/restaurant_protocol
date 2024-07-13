@@ -7,3 +7,5 @@ pub use admin::*;
 pub mod employee;
 pub use employee::*;
 
+pub mod inventory;
+pub use inventory::*;

@@ -2,17 +2,21 @@ use anchor_lang::prelude::*;
 use crate::{
     state::{
         Admin,
-        Employee,
+        Inventory,
         Protocol
     },
     constant,
     errors::{SetupError, ProtocolError},
 };
 
-impl<'info> EmployeeInit<'info> {
-    pub fn initialize_employee(
+impl<'info> InventoryAdd<'info> {
+    pub fn add(
         &mut self,
-        username: String,
+        sku: u64,
+        category: Pubkey,
+        name: String,
+        price: f64,
+        stock: f64,
     ) -> Result<()> {
 
         /*
@@ -27,18 +31,21 @@ impl<'info> EmployeeInit<'info> {
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
         require!(self.admin_state.is_some() || self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
         
-        self.employee_state.set_inner(Employee {
-            publickey: self.employee.key(),
-            username,
-            initialized: Clock::get()?.unix_timestamp,
+        self.inventory_state.set_inner(Inventory {
+            sku,
+            category,
+            name,
+            price,
+            stock,
+            last_order: 0,
         });
 
         Ok(())
     }
 }
 
-impl<'info> EmployeeRemove<'info> {
-    pub fn remove_employee(
+impl<'info> InventoryRemove<'info> {
+    pub fn remove(
         &mut self
     ) -> Result<()> {
 
@@ -65,7 +72,7 @@ impl<'info> EmployeeRemove<'info> {
 
 #[derive(Accounts)]
 #[instruction(username: String)]
-pub struct EmployeeInit<'info> {
+pub struct InventoryAdd<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
@@ -73,15 +80,15 @@ pub struct EmployeeInit<'info> {
         bump
     )]
     pub admin_state: Option<Account<'info, Admin>>,
-    pub employee: SystemAccount<'info>,
+    pub inventory_item: SystemAccount<'info>,
     #[account(
         init,
         payer = admin,
-        space = Employee::INIT_SPACE + 5,
-        seeds = [b"admin_state", employee.key().as_ref()],
+        space = Inventory::INIT_SPACE + 5,
+        seeds = [b"inventory_state", inventory_item.key().as_ref()],
         bump
     )]
-    pub employee_state: Account<'info, Employee>,
+    pub inventory_state: Account<'info, Inventory>,
     #[account(
         seeds = [b"protocol"],
         bump,
@@ -91,17 +98,17 @@ pub struct EmployeeInit<'info> {
 }
 
 #[derive(Accounts)]
-pub struct EmployeeRemove<'info> {
-    /// CHECK: This is the employee being removed, it's ok because the signer will be required to be the overall authority on program
+pub struct InventoryRemove<'info> {
+    /// CHECK: This is the inventory being removed, it's ok because the signer will be required to be the overall authority on program
     #[account(mut)]
-    pub employee: AccountInfo<'info>,
+    pub inventory_item: AccountInfo<'info>,
     #[account(
         mut,
         close = admin, // this is where the account rent funds will be sent to after the admin is removed
-        seeds = [b"admin_state", admin.key().as_ref()],
+        seeds = [b"inventory_state", inventory_item.key().as_ref()],
         bump
     )]
-    pub employee_state: Account<'info, Employee>,
+    pub inventory_state: Account<'info, Inventory>,
     pub admin: Signer<'info>,
     #[account(
         seeds = [b"protocol"],
