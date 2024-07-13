@@ -12,3 +12,9 @@ pub use inventory::*;
 
 pub mod menu;
 pub use menu::*;
+
+pub mod customer;
+pub use customer::*;
+
+pub mod order;
+pub use order::*;

@@ -61,12 +61,28 @@ impl Space for MenuItem {
 }
 
 #[account]
-pub struct Order {
+pub struct Customer {
+    pub publickey: Pubkey,
+    pub reward_points: u64,
+    pub initialized: i64,
+}
+
+impl Space for Customer {
+    const INIT_SPACE: usize = 8 + 8 + 8;
+}
+
+#[account]
+pub struct CustomerOrder {
     pub order_id: u64,         // Order ID -- unique identifier for the order
     pub customer: Pubkey,      // Customer of the order -- who made the order
     pub items: Vec<u64>,       // Items in the order -- what products were ordered, skus of the products
     pub total: f64,            // Total of the order -- how much the order costs
     pub status: u8,            // Status of the order -- what state the order is in (0: pending, 1: completed, 2: cancelled)
-    pub created_at: u64,       // Created at -- when the order was made, stored as unix timestamp
-    pub updated_at: u64,       // Updated at -- when the order was last updated, stored as unix timestamp
+    pub created_at: i64,       // Created at -- when the order was made, stored as unix timestamp
+    pub updated_at: i64,       // Updated at -- when the order was last updated, stored as unix timestamp
 }
+
+impl Space for CustomerOrder {
+    const INIT_SPACE: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8;
+}
+

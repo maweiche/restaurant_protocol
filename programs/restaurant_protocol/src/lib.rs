@@ -73,4 +73,15 @@ pub mod restaurant_protocol {
     pub fn remove_menu_item(ctx: Context<Menu>) -> Result<()> {
         ctx.accounts.remove()
     }
+
+    pub fn add_customer(ctx: Context<CustomerInit>) -> Result<()> {
+        ctx.accounts.add()
+    }
+
+    pub fn add_order(ctx: Context<Order>, 
+        order_id: u64,
+        items: Vec<u64>,
+    ) -> Result<()> {
+        ctx.accounts.add(order_id, items)
+    }
 }
