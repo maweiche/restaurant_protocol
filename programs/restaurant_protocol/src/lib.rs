@@ -39,7 +39,7 @@ pub mod restaurant_protocol {
         ctx.accounts.remove_employee()
     }
 
-    pub fn add_inventory(ctx: Context<InventoryAdd>, 
+    pub fn add_inventory(ctx: Context<Inventory>, 
         sku: u64,
         category: Pubkey,
         name: String,
@@ -49,11 +49,11 @@ pub mod restaurant_protocol {
         ctx.accounts.add(sku, category, name, price, stock)
     }
 
-    pub fn remove_inventory(ctx: Context<InventoryRemove>) -> Result<()> {
+    pub fn remove_inventory(ctx: Context<Inventory>) -> Result<()> {
         ctx.accounts.remove()
     }
 
-    pub fn add_menu_item(ctx: Context<MenuAdd>, 
+    pub fn add_menu_item(ctx: Context<Menu>, 
         sku: u64,
         category: Pubkey,
         name: String,
@@ -64,7 +64,13 @@ pub mod restaurant_protocol {
         ctx.accounts.add(sku, category, name, price, ingredients, active)
     }
 
-    pub fn remove_menu_item(ctx: Context<MenuRemove>) -> Result<()> {
+    pub fn update_menu_item(ctx: Context<Menu>, 
+        active: bool,
+    ) -> Result<()> {
+        ctx.accounts.update(active)
+    }
+
+    pub fn remove_menu_item(ctx: Context<Menu>) -> Result<()> {
         ctx.accounts.remove()
     }
 }

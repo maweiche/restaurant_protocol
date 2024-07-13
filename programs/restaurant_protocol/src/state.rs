@@ -33,7 +33,7 @@ impl Space for Employee {
 }
 
 #[account]
-pub struct Inventory {
+pub struct InventoryItem {
     pub sku: u64,              // Stock Keeping Unit -- how we identify the product
     pub category: Pubkey,      // Category of the product -- stored as public key for easy sorting and filtering
     pub name: String,          // Name of the product -- what the product is called
@@ -42,7 +42,7 @@ pub struct Inventory {
     pub last_order: u64,       // Last time the product was ordered -- stored as unix timestamp
 }
 
-impl Space for Inventory {
+impl Space for InventoryItem {
     const INIT_SPACE: usize = 8 + 32 + 4 + 8 + 8 + 8;
 }
 
@@ -58,4 +58,15 @@ pub struct MenuItem {
 
 impl Space for MenuItem {
     const INIT_SPACE: usize = 8 + 32 + 4 + 8 + 8 + 8 + 8;
+}
+
+#[account]
+pub struct Order {
+    pub order_id: u64,         // Order ID -- unique identifier for the order
+    pub customer: Pubkey,      // Customer of the order -- who made the order
+    pub items: Vec<u64>,       // Items in the order -- what products were ordered, skus of the products
+    pub total: f64,            // Total of the order -- how much the order costs
+    pub status: u8,            // Status of the order -- what state the order is in (0: pending, 1: completed, 2: cancelled)
+    pub created_at: u64,       // Created at -- when the order was made, stored as unix timestamp
+    pub updated_at: u64,       // Updated at -- when the order was last updated, stored as unix timestamp
 }
