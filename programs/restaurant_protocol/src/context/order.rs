@@ -47,6 +47,7 @@ impl<'info> Order<'info> {
 )]
 pub struct Order<'info> {
     #[account(mut)]
+    /// CHECK
     pub restaurant: AccountInfo<'info>,
     #[account(mut)]
     pub customer: Signer<'info>,
@@ -55,6 +56,7 @@ pub struct Order<'info> {
         bump,
     )]
     pub customer_profile: Account<'info, Customer>,
+    /// CHECK
     pub order: AccountInfo<'info>,
     #[account(
         init,

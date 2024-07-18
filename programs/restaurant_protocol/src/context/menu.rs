@@ -99,6 +99,7 @@ pub struct Menu<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(mut)]
+    /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub menu_item: SystemAccount<'info>,
     #[account(

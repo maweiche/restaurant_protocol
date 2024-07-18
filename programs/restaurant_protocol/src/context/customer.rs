@@ -347,6 +347,7 @@ pub struct CustomerInit<'info> {
     )]
     /// CHECK
     pub customer_mint_ata: AccountInfo<'info>,
+    /// CHECK
     pub restaurant_mint: AccountInfo<'info>,
     #[account(
         seeds = [b"restaurant", restaurant_mint.key().as_ref()],

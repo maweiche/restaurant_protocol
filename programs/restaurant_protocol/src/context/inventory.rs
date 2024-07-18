@@ -73,6 +73,7 @@ pub struct Inventory<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(mut)]
+    /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub inventory_item: SystemAccount<'info>,
     #[account(

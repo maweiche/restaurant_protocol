@@ -107,6 +107,7 @@ pub struct EmployeeRemove<'info> {
     )]
     pub admin_state: Account<'info, Admin>,
     #[account(mut)]
+    /// CHECK
     restaurant: AccountInfo<'info>,
     pub admin: Signer<'info>,
     #[account(
