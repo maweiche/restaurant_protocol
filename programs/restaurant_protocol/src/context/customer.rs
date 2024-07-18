@@ -1,14 +1,12 @@
 use crate::{
     state::{
-        Admin,
         Restaurant,
         Customer,
         Protocol,
         CustomerNft,
         Attributes
     },
-    constant,
-    errors::{SetupError, ProtocolError},
+    errors::ProtocolError,
 };
 
 pub use anchor_lang::{
@@ -27,7 +25,6 @@ pub use anchor_spl::{
             extension::StateWithExtensions,
         }},
     associated_token::{AssociatedToken, Create, create},  
-    token::Token,
     token_interface::{MintTo, mint_to, set_authority, SetAuthority}
 };
 pub use spl_token_2022::{

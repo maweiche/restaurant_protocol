@@ -29,6 +29,7 @@ impl<'info> EmployeeInit<'info> {
         
         self.employee_state.set_inner(Employee {
             publickey: self.employee.key(),
+            restaurant: *self.restaurant.key,
             username,
             initialized: Clock::get()?.unix_timestamp,
         });
@@ -69,7 +70,7 @@ pub struct EmployeeInit<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
-        seeds = [b"admin_state", admin.key().as_ref()],
+        seeds = [b"admin_state", admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
     pub admin_state: Option<Account<'info, Admin>>,
@@ -78,10 +79,13 @@ pub struct EmployeeInit<'info> {
         init,
         payer = admin,
         space = Employee::INIT_SPACE + 5,
-        seeds = [b"admin_state", employee.key().as_ref()],
+        seeds = [b"employee_state", employee.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
     pub employee_state: Account<'info, Employee>,
+    #[account(mut)]
+    /// CHECK: this is fine since we are hard coding the collection sysvar.
+    pub restaurant: AccountInfo<'info>,
     #[account(
         seeds = [b"protocol"],
         bump,
@@ -98,10 +102,12 @@ pub struct EmployeeRemove<'info> {
     #[account(
         mut,
         close = admin, // this is where the account rent funds will be sent to after the admin is removed
-        seeds = [b"admin_state", admin.key().as_ref()],
+        seeds = [b"admin_state", admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
-    pub employee_state: Account<'info, Employee>,
+    pub admin_state: Account<'info, Admin>,
+    #[account(mut)]
+    restaurant: AccountInfo<'info>,
     pub admin: Signer<'info>,
     #[account(
         seeds = [b"protocol"],

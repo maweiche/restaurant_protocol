@@ -20,6 +20,15 @@ pub mod restaurant_protocol {
         ctx.accounts.change_locked_setting()
     }
 
+    pub fn add_restaurant(ctx: Context<RestaurantInit>, 
+        reference: Pubkey,
+        name: String,
+        symbol: String,
+        url: String,
+    ) -> Result<()> {
+        ctx.accounts.add(reference, name, symbol, url, ctx.bumps)
+    }
+
     pub fn initialize_admin_account(ctx: Context<AdminInit>, 
         username: String
     ) -> Result<()> {

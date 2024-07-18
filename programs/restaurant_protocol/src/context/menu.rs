@@ -98,12 +98,14 @@ impl<'info> Menu<'info> {
 pub struct Menu<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+    #[account(mut)]
+    pub restaurant: AccountInfo<'info>,
     pub menu_item: SystemAccount<'info>,
     #[account(
         init,
         payer = admin,
         space = MenuItem::INIT_SPACE + 5,
-        seeds = [b"menu_state", menu_item.key().as_ref()],
+        seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
     pub menu_state: Account<'info, MenuItem>,

@@ -38,6 +38,7 @@ impl Space for Admin {
 #[account]
 pub struct Employee {
     pub publickey: Pubkey,
+    pub restaurant: Pubkey,
     pub username: String,
     pub initialized: i64,
 }

@@ -72,12 +72,14 @@ impl<'info> Inventory<'info> {
 pub struct Inventory<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+    #[account(mut)]
+    pub restaurant: AccountInfo<'info>,
     pub inventory_item: SystemAccount<'info>,
     #[account(
         init,
         payer = admin,
         space = InventoryItem::INIT_SPACE + 5,
-        seeds = [b"inventory_state", inventory_item.key().as_ref()],
+        seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
     pub inventory_state: Account<'info, InventoryItem>,

@@ -5,8 +5,7 @@ use crate::{
         CustomerOrder,
         Protocol
     },
-    constant,
-    errors::{SetupError, ProtocolError},
+    errors::ProtocolError,
 };
 
 impl<'info> Order<'info> {
@@ -43,23 +42,25 @@ impl<'info> Order<'info> {
 
 #[derive(Accounts)]
 #[instruction(
-    
-
+    order_id: u64,
+    items: Vec<u64>,
 )]
 pub struct Order<'info> {
     #[account(mut)]
+    pub restaurant: AccountInfo<'info>,
+    #[account(mut)]
     pub customer: Signer<'info>,
     #[account(
-        seeds = [b"customer", customer.key().as_ref()],
+        seeds = [b"customer", customer.key().as_ref(), restaurant.key().as_ref()],
         bump,
     )]
     pub customer_profile: Account<'info, Customer>,
-    pub order: SystemAccount<'info>,
+    pub order: AccountInfo<'info>,
     #[account(
         init,
         payer = customer,
         space = CustomerOrder::INIT_SPACE + 5,
-        seeds = [b"order_state", order.key().as_ref()],
+        seeds = [b"order_state", order.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
     pub order_state: Account<'info, CustomerOrder>,
