@@ -11,6 +11,20 @@ impl Space for Protocol {
 }
 
 #[account]
+pub struct Restaurant {
+    pub reference: Pubkey, // how we will sort
+    pub name: String,
+    pub symbol: String,
+    pub owner: Pubkey,
+    pub url: String,
+    pub customer_count: u32,
+}
+
+impl Space for Restaurant {
+    const INIT_SPACE: usize = 8 + 32 + 4 + 32 + 4 + 32 + 4 + 32 + 4 + 4;
+}
+
+#[account]
 pub struct Admin {
     pub publickey: Pubkey,
     pub username: String,
@@ -62,13 +76,25 @@ impl Space for MenuItem {
 
 #[account]
 pub struct Customer {
+    pub id: u64,
+    pub restaurant: Pubkey,
     pub publickey: Pubkey,
-    pub reward_points: u64,
-    pub initialized: i64,
+    pub customer_nft: Pubkey,
+    pub member_since: i64,
 }
 
 impl Space for Customer {
     const INIT_SPACE: usize = 8 + 8 + 8;
+}
+
+#[account]
+pub struct CustomerNft {
+    pub id: u64,
+    pub reward_points: u64,
+}
+
+impl Space for CustomerNft {
+    const INIT_SPACE: usize = 8 + 8 + 32 + 4 + 2 + 32 + 2 + 8;
 }
 
 #[account]
@@ -86,3 +112,8 @@ impl Space for CustomerOrder {
     const INIT_SPACE: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8;
 }
 
+#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
+pub struct Attributes {
+    pub key: String,
+    pub value: String,
+}

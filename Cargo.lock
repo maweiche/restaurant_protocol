@@ -1669,6 +1669,10 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "solana-program",
+ "spl-pod",
+ "spl-token",
+ "spl-token-2022",
+ "spl-token-metadata-interface",
 ]
 
 [[package]]
@@ -2166,9 +2170,9 @@ dependencies = [
 
 [[package]]
 name = "spl-token"
-version = "4.0.3"
+version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9eb465e4bf5ce1d498f05204c8089378c1ba34ef2777ea95852fc53a1fd4fb2"
+checksum = "95ae123223633a389f95d1da9d49c2d0a50d499e7060b9624626a69e536ad2a4"
 dependencies = [
  "arrayref",
  "bytemuck",

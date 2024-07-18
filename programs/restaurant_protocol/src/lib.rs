@@ -4,6 +4,7 @@ mod errors;
 mod constant;
 mod context;
 use context::*;
+use state::*;
 
 declare_id!("99vazimgMSgqzg3zLBGXhZjSZVBRvThChw49VVp9U39T");
 
@@ -74,8 +75,12 @@ pub mod restaurant_protocol {
         ctx.accounts.remove()
     }
 
-    pub fn add_customer(ctx: Context<CustomerInit>) -> Result<()> {
-        ctx.accounts.add()
+    pub fn add_customer(ctx: Context<CustomerInit>,
+        id: u64,
+        uri: String,
+        attributes: Vec<Attributes>
+    ) -> Result<()> {
+        ctx.accounts.add(id, uri, attributes, ctx.bumps)
     }
 
     pub fn add_order(ctx: Context<Order>, 
