@@ -8,7 +8,7 @@ use crate::{
     errors::{SetupError, ProtocolError},
 };
 
-impl<'info> Inventory<'info> {
+impl<'info> InventoryAdd<'info> {
     pub fn add(
         &mut self,
         sku: u64,
@@ -41,7 +41,44 @@ impl<'info> Inventory<'info> {
 
         Ok(())
     }
+}
 
+impl<'info> InventoryUpdate<'info> {
+    pub fn update(
+        &mut self,
+        sku: u64,
+        category: Pubkey,
+        name: String,
+        price: f64,
+        stock: f64,
+        last_order: u64
+    ) -> Result<()> {
+
+        /*
+        
+
+            Some security check:
+            
+
+        */
+        
+        require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
+        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        
+        self.inventory_state.set_inner(InventoryItem {
+            sku,
+            category,
+            name,
+            price,
+            stock,
+            last_order
+        });
+
+        Ok(())
+    }
+}
+
+impl<'info> InventoryRemove<'info> {
     pub fn remove(
         &mut self
     ) -> Result<()> {
@@ -69,7 +106,7 @@ impl<'info> Inventory<'info> {
 
 #[derive(Accounts)]
 #[instruction(username: String)]
-pub struct Inventory<'info> {
+pub struct InventoryAdd<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(mut)]
@@ -80,6 +117,50 @@ pub struct Inventory<'info> {
         init,
         payer = admin,
         space = InventoryItem::INIT_SPACE + 5,
+        seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub inventory_state: Account<'info, InventoryItem>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InventoryUpdate<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(mut)]
+    /// CHECK
+    pub restaurant: AccountInfo<'info>,
+    pub inventory_item: SystemAccount<'info>,
+    #[account(
+        seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub inventory_state: Account<'info, InventoryItem>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InventoryRemove<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(mut)]
+    /// CHECK
+    pub restaurant: AccountInfo<'info>,
+    pub inventory_item: SystemAccount<'info>,
+    #[account(
+        mut,
+        close = admin,
         seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]

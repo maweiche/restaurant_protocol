@@ -8,7 +8,7 @@ use crate::{
     errors::{SetupError, ProtocolError},
 };
 
-impl<'info> Menu<'info> {
+impl<'info> MenuInit<'info> {
     pub fn add(
         &mut self,
         sku: u64,
@@ -42,7 +42,9 @@ impl<'info> Menu<'info> {
 
         Ok(())
     }
+}
 
+impl<'info> MenuUpdate<'info> {
     pub fn update(
         &mut self,
         active: bool,
@@ -67,7 +69,9 @@ impl<'info> Menu<'info> {
 
         Ok(())
     }
+}
 
+impl<'info> MenuRemove<'info> {
     pub fn remove(
         &mut self
     ) -> Result<()> {
@@ -95,7 +99,7 @@ impl<'info> Menu<'info> {
 
 #[derive(Accounts)]
 #[instruction(username: String)]
-pub struct Menu<'info> {
+pub struct MenuInit<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(mut)]
@@ -106,6 +110,51 @@ pub struct Menu<'info> {
         init,
         payer = admin,
         space = MenuItem::INIT_SPACE + 5,
+        seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub menu_state: Account<'info, MenuItem>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct MenuUpdate<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(mut)]
+    /// CHECK
+    pub restaurant: AccountInfo<'info>,
+    pub menu_item: SystemAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub menu_state: Account<'info, MenuItem>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct MenuRemove<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(mut)]
+    /// CHECK
+    pub restaurant: AccountInfo<'info>,
+    pub menu_item: SystemAccount<'info>,
+    #[account(
+        mut,
+        close = admin,
         seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
