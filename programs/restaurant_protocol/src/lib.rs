@@ -20,6 +20,16 @@ pub mod restaurant_protocol {
         ctx.accounts.change_locked_setting()
     }
 
+    pub fn initialize_admin_account(ctx: Context<AdminInit>, 
+        username: String
+    ) -> Result<()> {
+        ctx.accounts.initialize_admin(username)
+    }
+
+    pub fn remove_admin_account(ctx: Context<AdminRemove>) -> Result<()> {
+        ctx.accounts.remove_admin()
+    }
+
     pub fn add_restaurant(ctx: Context<RestaurantInit>, 
         reference: Pubkey,
         name: String,
@@ -29,13 +39,13 @@ pub mod restaurant_protocol {
         ctx.accounts.add(reference, name, symbol, url, ctx.bumps)
     }
 
-    pub fn initialize_admin_account(ctx: Context<AdminInit>, 
+    pub fn initialize_restaurant_admin(ctx: Context<RestaurantAdminInit>, 
         username: String
     ) -> Result<()> {
         ctx.accounts.initialize_admin(username)
     }
 
-    pub fn remove_admin_account(ctx: Context<AdminRemove>) -> Result<()> {
+    pub fn remove_restaurant_admin(ctx: Context<RestaurantAdminRemove>) -> Result<()> {
         ctx.accounts.remove_admin()
     }
 
@@ -110,10 +120,24 @@ pub mod restaurant_protocol {
         ctx.accounts.add(id, uri, attributes, ctx.bumps)
     }
 
-    pub fn add_order(ctx: Context<Order>, 
+    pub fn add_order(ctx: Context<OrderInit>, 
         order_id: u64,
         items: Vec<u64>,
     ) -> Result<()> {
         ctx.accounts.add(order_id, items)
+    }
+
+    pub fn update_order(ctx: Context<OrderUpdate>, 
+        status: u8,
+    ) -> Result<()> {
+        ctx.accounts.update(status)
+    }
+
+    pub fn cancel_order(ctx: Context<OrderCancel>) -> Result<()> {
+        ctx.accounts.cancel()
+    }
+
+    pub fn close_order(ctx: Context<OrderClose>) -> Result<()> {
+        ctx.accounts.close()
     }
 }

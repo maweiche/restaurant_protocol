@@ -11,6 +11,17 @@ impl Space for Protocol {
 }
 
 #[account]
+pub struct Admin {
+    pub publickey: Pubkey,
+    pub username: String,
+    pub initialized: i64,
+}
+
+impl Space for Admin {
+    const INIT_SPACE: usize = 8 + 32 + 4 + 8;
+}
+
+#[account]
 pub struct Restaurant {
     pub reference: Pubkey, // how we will sort
     pub name: String,
@@ -25,15 +36,17 @@ impl Space for Restaurant {
 }
 
 #[account]
-pub struct Admin {
+pub struct RestaurantAdmin {
     pub publickey: Pubkey,
+    pub restaurant: Pubkey,
     pub username: String,
     pub initialized: i64,
 }
 
-impl Space for Admin {
-    const INIT_SPACE: usize = 8 + 32 + 4 + 8;
+impl Space for RestaurantAdmin {
+    const INIT_SPACE: usize = 8 + 32 + 32 + 4 + 8;
 }
+
 
 #[account]
 pub struct Employee {
@@ -104,7 +117,7 @@ pub struct CustomerOrder {
     pub customer: Pubkey,      // Customer of the order -- who made the order
     pub items: Vec<u64>,       // Items in the order -- what products were ordered, skus of the products
     pub total: f64,            // Total of the order -- how much the order costs
-    pub status: u8,            // Status of the order -- what state the order is in (0: pending, 1: completed, 2: cancelled)
+    pub status: u8,            // Status of the order -- what state the order is in (0: pending, 1: completed, 2: finalized, 3: cancelled)
     pub created_at: i64,       // Created at -- when the order was made, stored as unix timestamp
     pub updated_at: i64,       // Updated at -- when the order was last updated, stored as unix timestamp
 }
