@@ -112,6 +112,31 @@ pub mod restaurant_protocol {
         ctx.accounts.remove()
     }
 
+    pub fn add_reward(ctx: Context<RewardInit>, 
+        category: Pubkey,
+        restaurant: Pubkey,
+        reward_points: u64,
+        reward_item: Pubkey,
+        uri: String,
+    ) -> Result<()> {
+        ctx.accounts.add(
+            category,
+            restaurant,
+            reward_points,
+            reward_item,
+            uri,
+            ctx.bumps
+        )
+    }
+
+    pub fn remove_reward(ctx: Context<RewardRemove>) -> Result<()> {
+        ctx.accounts.remove()
+    }
+
+    pub fn buy_reward(ctx: Context<RewardBuy>) -> Result<()> {
+        ctx.accounts.buy(ctx.bumps)
+    }
+
     pub fn add_customer(ctx: Context<CustomerInit>,
         id: u64,
         uri: String,
@@ -122,9 +147,11 @@ pub mod restaurant_protocol {
 
     pub fn add_order(ctx: Context<OrderInit>, 
         order_id: u64,
+        total: f32,
         items: Vec<u64>,
+        
     ) -> Result<()> {
-        ctx.accounts.add(order_id, items)
+        ctx.accounts.add(order_id, total, items)
     }
 
     pub fn update_order(ctx: Context<OrderUpdate>, 

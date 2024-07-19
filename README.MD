@@ -1,9 +1,10 @@
 # RESTAURANT PROGRAM
 
 - [X] add order status update function ( processed / completed ) -- restaurant
-- [ ] add send reward (as nft) function -- restaurant
+- [ ] add send reward (as nft) function -- rewards
+- [X] add trade in points for reward (as nft) function -- rewards
 - [ ] add remove restaurant function -- protocol
-- [ ] add fn so customer_nft rewards update when order is placed 
+- [X] add fn so customer_nft rewards update when order is placed 
 - [ ] add customer remove fn
 - [ ] add tax cut during payment fn
 

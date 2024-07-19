@@ -21,3 +21,6 @@ pub use customer::*;
 
 pub mod order;
 pub use order::*;
+
+pub mod reward;
+pub use reward::*;

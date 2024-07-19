@@ -116,7 +116,7 @@ pub struct CustomerOrder {
     pub order_id: u64,         // Order ID -- unique identifier for the order
     pub customer: Pubkey,      // Customer of the order -- who made the order
     pub items: Vec<u64>,       // Items in the order -- what products were ordered, skus of the products
-    pub total: f64,            // Total of the order -- how much the order costs
+    pub total: f32,            // Total of the order -- how much the order costs
     pub status: u8,            // Status of the order -- what state the order is in (0: pending, 1: completed, 2: finalized, 3: cancelled)
     pub created_at: i64,       // Created at -- when the order was made, stored as unix timestamp
     pub updated_at: i64,       // Updated at -- when the order was last updated, stored as unix timestamp
@@ -124,6 +124,18 @@ pub struct CustomerOrder {
 
 impl Space for CustomerOrder {
     const INIT_SPACE: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8;
+}
+
+#[account]
+pub struct Reward {
+    pub category: Pubkey,
+    pub restaurant: Pubkey,
+    pub reward_points: u64,
+    pub reward_item: Pubkey,
+}
+
+impl Space for Reward {
+    const INIT_SPACE: usize = 8 + 32 + 4 + 32 + 4 + 8 + 32 + 4;
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone)]

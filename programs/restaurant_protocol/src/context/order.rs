@@ -1,8 +1,24 @@
-use anchor_lang::prelude::*;
+use {
+    anchor_lang::prelude::*,
+    anchor_spl::{
+        token_2022::{
+            Token2022, 
+            spl_token_2022::{
+                instruction::AuthorityType,
+                state::Account as TokenAccount,
+                extension::StateWithExtensions,
+            }},
+        associated_token::{AssociatedToken, Create, create},
+        token::Token,  
+        token_interface::{MintTo, mint_to, set_authority, SetAuthority},
+    },
+    solana_program::{system_instruction, program::invoke},
+};
 use crate::{
     state::{
         Customer,
         CustomerOrder,
+        CustomerNft,
         Protocol,
         RestaurantAdmin
     },
@@ -13,6 +29,7 @@ impl<'info> OrderInit<'info> {
     pub fn add(
         &mut self,
         order_id: u64,
+        total: f32,
         items: Vec<u64>,
     ) -> Result<()> {
 
@@ -26,12 +43,32 @@ impl<'info> OrderInit<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
+
+        let amount_in_lamports = total as u64 * 1000000000;
+        let transfer_instruction = system_instruction::transfer(
+            &self.customer.key(),
+            &self.restaurant.owner.key(),
+            amount_in_lamports,
+        );
+
+        invoke(
+            &transfer_instruction,
+            &[
+                self.customer.to_account_info(),
+                self.restaurant_owner.to_account_info(),
+                self.system_program.to_account_info(),
+            ],
+        )?;
+
+        let new_reward_amount = (total * 10.0) + self.customer_nft.reward_points as f32;
+
+        self.customer_nft.reward_points = new_reward_amount as u64;
         
         self.order_state.set_inner(CustomerOrder {
             order_id,
             customer: self.customer.key(),
             items,
-            total: 0.0,
+            total, // highest f16 number is 65504.0
             status: 0,
             created_at: Clock::get()?.unix_timestamp,
             updated_at: 0,
@@ -118,12 +155,21 @@ pub struct OrderInit<'info> {
     /// CHECK
     pub restaurant: AccountInfo<'info>,
     #[account(mut)]
+    /// CHECK
+    pub restaurant_owner: AccountInfo<'info>,
+    #[account(mut)]
     pub customer: Signer<'info>,
     #[account(
         seeds = [b"customer", customer.key().as_ref(), restaurant.key().as_ref()],
         bump,
     )]
     pub customer_profile: Account<'info, Customer>,
+    #[account(
+        mut,
+        seeds = [b"member_nft", customer.key().as_ref(), restaurant.key().as_ref()],
+        bump,
+    )] 
+    pub customer_nft: Account<'info, CustomerNft>,
     /// CHECK
     pub order: AccountInfo<'info>,
     #[account(
