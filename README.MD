@@ -6,6 +6,8 @@
 - [ ] add remove restaurant function -- protocol
 - [X] add fn so customer_nft rewards update when order is placed 
 - [ ] add customer remove fn
+
+### Possible Adds
 - [ ] add tax cut during payment fn
 
 

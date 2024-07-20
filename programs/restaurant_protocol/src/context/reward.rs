@@ -1,11 +1,10 @@
 use crate::{
     state::{
         Restaurant,
-        Customer,
         Protocol,
+        Reward,
+        Customer,
         CustomerNft,
-        Attributes,
-        Reward
     },
     errors::ProtocolError,
 };
@@ -31,17 +30,12 @@ pub use anchor_spl::{
 pub use spl_token_2022::{
     extension::ExtensionType,
     instruction::{initialize_mint_close_authority, initialize_permanent_delegate, initialize_mint2},
-
     extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer,
-    extension::group_member_pointer::instruction::initialize as initialize_group_member_pointer,
 };
 pub use spl_token_metadata_interface::{
     state::{TokenMetadata, Field},
     instruction::{initialize as initialize_metadata_account, update_field as update_metadata_account},
 };
-
-
-
 
 impl<'info> RewardInit<'info> {
     pub fn add(
@@ -238,7 +232,7 @@ impl<'info> RewardBuy<'info> {
         /*
 
 
-            STILL NEED TO DEDUCT REWARD_POINTS COST FROM CUSTOMER_PROFILE AND CUSTOMER_NFT
+            STILL NEED TO ADD SECURITY CHECKS
 
         */
 
@@ -302,6 +296,39 @@ impl<'info> RewardBuy<'info> {
         )?;
 
         // check the post balance of the mint
+        {
+            let _data = self.customer_mint_ata.data.borrow();
+            let _state = StateWithExtensions::<TokenAccount>::unpack(&_data)?;
+        
+            // msg!("after mint balance={}", _state.base.amount);
+            require!(
+                _state.base.amount == 1,
+                ProtocolError::InvalidBalancePostMint
+            );
+        }
+
+
+
+        let cost_of_reward = self.reward.reward_points;
+        let current_reward_points = self.customer_nft.reward_points;
+        let new_reward_points = current_reward_points - cost_of_reward;
+
+        self.customer_nft.reward_points = new_reward_points;
+        
+        invoke_signed(
+            &update_metadata_account(
+                &self.token_2022_program.key(),
+                &self.mint.key(),
+                &self.auth.key(),
+                Field::Key("reward_points".to_string()),
+                new_reward_points.to_string(),
+            ),
+            &vec![
+                self.mint.to_account_info(),
+                self.auth.to_account_info(),
+            ],
+            signer_seeds
+        )?;
 
         Ok(())
     }
@@ -375,6 +402,18 @@ pub struct RewardBuy<'info> {
     pub restaurant: Account<'info, Restaurant>,
     #[account(mut)]
     pub customer: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"customer", customer.key().as_ref()],
+        bump
+    )]
+    pub customer_profile: Account<'info, Customer>,
+    #[account(
+        mut,
+        seeds = [b"member_nft", customer.key().as_ref(), restaurant.key().as_ref()],
+        bump,
+    )] 
+    pub customer_nft: Account<'info, CustomerNft>,
     #[account(
         seeds = [b"reward", reward.key().as_ref(), restaurant.key().as_ref()],
         bump
