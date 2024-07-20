@@ -6,12 +6,20 @@ use crate::{
         Customer,
         CustomerNft,
     },
+    constant::{ ED25519_PROGRAM_ID, admin_wallet },
     errors::ProtocolError,
 };
-
+use std::str::FromStr;
 pub use anchor_lang::{
     solana_program::{
-        sysvar::rent::ID as RENT_ID,
+        sysvar::{
+            rent::ID as RENT_ID,
+            instructions::{
+                self,
+                load_current_index_checked,
+                load_instruction_at_checked,
+            }
+        },
         program::{invoke, invoke_signed}
     },
     prelude::*
@@ -335,6 +343,143 @@ impl<'info> RewardBuy<'info> {
 
 }
 
+impl<'info> RewardAirdrop<'info> {
+    pub fn airdrop(
+        &mut self,
+        bumps: RewardAirdropBumps,
+    ) -> Result<()> {
+
+        /*
+
+        
+            STILL NEED TO ADD SECURITY CHECKS
+
+        */
+
+        require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
+
+        // Instruction Check
+        let ixs = self.instructions.to_account_info();
+        let current_index = load_current_index_checked(&ixs)? as usize;
+
+
+        let seeds: &[&[u8]; 2] = &[
+            b"auth",
+            &[bumps.auth],
+        ];
+        let signer_seeds = &[&seeds[..]];
+
+        // If the current index is greater than 0, then we can check for the airdrop instructions
+        if current_index > 0 {
+            match load_instruction_at_checked(current_index - 1, &ixs) {
+               Ok(signature_ix) => {
+                   if Pubkey::from_str(ED25519_PROGRAM_ID).unwrap() == signature_ix.program_id {
+                        // Ensure signing authority is correct
+                      require!(
+                        admin_wallet::id()
+                            .to_bytes()
+                            .eq(&signature_ix.data[16..48]),
+                        ProtocolError::UnauthorizedAdmin,
+                      );
+
+                      let mut message_data: [u8; 32] = [0; 32];
+                      message_data.copy_from_slice(&signature_ix.data[112..144]);
+                      let _buyer = Pubkey::from(message_data);
+
+                      require!(
+                        _buyer == *self.customer.key,
+                        ProtocolError::UnauthorizedAdmin,
+                      );
+
+                   //    invoke(
+                   //     &transfer_instruction_two,
+                   //     &[
+                   //         self.collection_owner.to_account_info(),
+                   //         self.payer.to_account_info(),
+                   //         self.system_program.to_account_info(),
+                   //     ],
+                   //     )?;
+           
+                       // Initialize ATA
+                       create(
+                       CpiContext::new(
+                           self.token_2022_program.to_account_info(),
+                           Create {
+                               payer: self.restaurant_admin.to_account_info(), // payer
+                               associated_token: self.customer_mint_ata.to_account_info(),
+                               authority: self.customer.to_account_info(), // owner
+                               mint: self.mint.to_account_info(),
+                               system_program: self.system_program.to_account_info(),
+                               token_program: self.token_2022_program.to_account_info(),
+                           }
+                       ),
+                       )?;
+
+                       // balance before minting
+                       {
+                           let _before_data = self.customer_mint_ata.data.borrow();
+                           let _before_state = StateWithExtensions::<TokenAccount>::unpack(&_before_data)?;
+                       
+                           // msg!("before mint balance={}", _before_state.base.amount);
+                       }
+                       
+           
+                       // Mint the mint
+                        mint_to(
+                       CpiContext::new_with_signer(
+                           self.token_2022_program.to_account_info(),
+                           MintTo {
+                               mint: self.mint.to_account_info(),
+                               to: self.customer_mint_ata.to_account_info(),
+                               authority: self.auth.to_account_info(),
+                           },
+                           signer_seeds
+                       ),
+                       1,
+                       )?;
+                   
+           
+                       set_authority(
+                           CpiContext::new_with_signer(
+                               self.token_2022_program.to_account_info(), 
+                               SetAuthority {
+                                   current_authority: self.auth.to_account_info(),
+                                   account_or_mint: self.mint.to_account_info(),
+                               }, 
+                               signer_seeds
+                           ), 
+                           AuthorityType::MintTokens, 
+                       None
+                       )?;
+
+                       // check the post balance of the mint
+                       {
+                           let _after_data = self.customer_mint_ata.data.borrow();
+                           let _after_state = StateWithExtensions::<TokenAccount>::unpack(&_after_data)?;
+
+                           // msg!("after mint balance={}", _after_state.base.amount);
+
+                           require!(_after_state.base.amount == 1, ProtocolError::InvalidBalancePostMint);
+                       }
+                   } else {
+                       // NO ED25519 instruction
+                       Err(ProtocolError::InstructionsNotCorrect)?;
+                   }
+               }
+               Err(_) => {
+                   // NO ED25519 instruction
+                   Err(ProtocolError::InstructionsNotCorrect)?;
+               }
+           }
+       }
+
+        Ok(())
+
+    }
+
+
+}
+
 #[derive(Accounts)]
 #[instruction(item: Pubkey)]
 pub struct RewardInit<'info> {
@@ -444,6 +589,70 @@ pub struct RewardBuy<'info> {
     )]
     /// CHECK:
     pub auth: UncheckedAccount<'info>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_2022_program: Program<'info, Token2022>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+pub struct RewardAirdrop<'info> {
+    #[account(mut)]
+    pub restaurant: Account<'info, Restaurant>,
+    #[account(mut)]
+    pub restaurant_admin: Signer<'info>,
+    /// CHECK: this is ok since it is restaurant_admin minting/sending nft
+    #[account(mut)]
+    pub customer: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"customer", customer.key().as_ref()],
+        bump
+    )]
+    pub customer_profile: Account<'info, Customer>,
+    #[account(
+        mut,
+        seeds = [b"member_nft", customer.key().as_ref(), restaurant.key().as_ref()],
+        bump,
+    )] 
+    pub customer_nft: Account<'info, CustomerNft>,
+    #[account(
+        seeds = [b"reward", reward.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub reward: Account<'info, Reward>,
+    #[account(
+        mut,
+        seeds = [
+            customer.key().as_ref(),
+            token_2022_program.key().as_ref(),
+            mint.key().as_ref()
+        ],
+        seeds::program = associated_token_program.key(),
+        bump
+    )]
+    /// CHECK
+    pub customer_mint_ata: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"mint", reward.key().as_ref()],
+        bump
+    )]
+    /// CHECK
+    pub mint: UncheckedAccount<'info>,
+    #[account(
+        seeds = [b"auth"],
+        bump
+    )]
+    /// CHECK:
+    pub auth: UncheckedAccount<'info>,
+    /// CHECK: InstructionsSysvar account
+    instructions: UncheckedAccount<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_2022_program: Program<'info, Token2022>,
     #[account(

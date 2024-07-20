@@ -137,6 +137,10 @@ pub mod restaurant_protocol {
         ctx.accounts.buy(ctx.bumps)
     }
 
+    pub fn airdrop_reward(ctx: Context<RewardAirdrop>) -> Result<()> {
+        ctx.accounts.airdrop(ctx.bumps)
+    }
+
     pub fn add_customer(ctx: Context<CustomerInit>,
         id: u64,
         uri: String,
