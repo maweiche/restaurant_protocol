@@ -101,6 +101,16 @@ impl<'info> RestaurantInit<'info> {
     }
 }
 
+impl<'info>RestaurantClose <'info> {
+    pub fn close(&mut self) -> Result<()> {
+        require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
+        require!(self.admin_state.publickey == *self.admin.key, ProtocolError::UnauthorizedAdmin);
+
+
+        Ok(())
+    }
+}
+
 #[derive(Accounts)]
 #[instruction(
     reference: Pubkey,
@@ -112,6 +122,11 @@ impl<'info> RestaurantInit<'info> {
 pub struct RestaurantInit<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", admin.key().as_ref()],
+        bump
+    )]
+    pub admin_state: Account<'info, Admin>,
     /// CHECK: this is ok because admin is setting up on owner behalf
     #[account(mut)]
     pub owner: AccountInfo<'info>,
@@ -123,11 +138,6 @@ pub struct RestaurantInit<'info> {
         space = Restaurant::INIT_SPACE + 54 + url.len() + name.len() + symbol.len() + 4 + 4
     )] 
     pub restaurant: Account<'info, Restaurant>,
-    #[account(
-        seeds = [b"admin_state", admin.key().as_ref()],
-        bump
-    )]
-    pub admin_state: Account<'info, Admin>,
     /// CHECK: this is fine since we are handling all the checks and creation in the program.
     #[account(
         mut,
@@ -139,6 +149,33 @@ pub struct RestaurantInit<'info> {
     /// CHECK: this is fine since we are hard coding the rent sysvar.
     pub rent: UncheckedAccount<'info>,
     pub token_2022_program: Program<'info, Token2022>,
+    #[account(
+        seeds = [b"protocol"],
+        bump,
+    )]
+    pub protocol: Account<'info, Protocol>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RestaurantClose<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", admin.key().as_ref()],
+        bump
+    )]
+    pub admin_state: Account<'info, Admin>,
+    /// CHECK: this is ok because admin is setting up on owner behalf
+    #[account(mut)]
+    pub owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        close = admin,
+        seeds = [b"restaurant", restaurant.key().as_ref()],
+        bump,
+    )] 
+    pub restaurant: Account<'info, Restaurant>,
     #[account(
         seeds = [b"protocol"],
         bump,
