@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::{
     state::{
+        RestaurantAdmin,
         InventoryItem,
         Protocol
     },
@@ -28,7 +29,7 @@ impl<'info> InventoryAdd<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
         
         self.inventory_state.set_inner(InventoryItem {
             sku,
@@ -63,7 +64,7 @@ impl<'info> InventoryUpdate<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
         
         self.inventory_state.set_inner(InventoryItem {
             sku,
@@ -97,7 +98,7 @@ impl<'info> InventoryRemove<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
     
         
         Ok(())
@@ -108,14 +109,19 @@ impl<'info> InventoryRemove<'info> {
 #[instruction(username: String)]
 pub struct InventoryAdd<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub inventory_item: SystemAccount<'info>,
     #[account(
         init,
-        payer = admin,
+        payer = restaurant_admin,
         space = InventoryItem::INIT_SPACE + 5,
         seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
         bump
@@ -132,7 +138,12 @@ pub struct InventoryAdd<'info> {
 #[derive(Accounts)]
 pub struct InventoryUpdate<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
@@ -153,14 +164,14 @@ pub struct InventoryUpdate<'info> {
 #[derive(Accounts)]
 pub struct InventoryRemove<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub inventory_item: SystemAccount<'info>,
     #[account(
         mut,
-        close = admin,
+        close = restaurant_admin,
         seeds = [b"inventory_state", inventory_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]

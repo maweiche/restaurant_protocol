@@ -130,14 +130,14 @@ impl<'info> CustomerInit<'info> {
 
         invoke_signed(
             &solana_program::system_instruction::create_account(
-                &self.admin.key(),
+                &self.restaurant_admin.key(),
                 &self.mint.key(),
                 lamports,
                 (size).try_into().unwrap(),
                 &spl_token_2022::id(),
             ),
             &vec![
-                self.admin.to_account_info(),
+                self.restaurant_admin.to_account_info(),
                 self.mint.to_account_info(),
             ],
             signer_seeds
@@ -149,7 +149,7 @@ impl<'info> CustomerInit<'info> {
                 &self.token_2022_program.key(),
                 &self.mint.key(),
                 Some(self.auth.key()),
-                Some(self.restaurant_mint.key()), 
+                Some(self.restaurant.key()), 
             )?,
             &vec![
                 self.mint.to_account_info(),
@@ -231,7 +231,7 @@ impl<'info> CustomerInit<'info> {
             CpiContext::new(
                 self.token_2022_program.to_account_info(),
                 Create {
-                payer: self.admin.to_account_info(), // payer
+                payer: self.restaurant_admin.to_account_info(), // payer
                 associated_token: self.customer_mint_ata.to_account_info(),
                 authority: self.customer.to_account_info(), // owner
                 mint: self.mint.to_account_info(),
@@ -303,12 +303,12 @@ impl<'info> CustomerInit<'info> {
 #[instruction(id: u64, uri: String, attributes: Vec<Attributes>)]
 pub struct CustomerInit<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
     /// CHECK: This is ok, we are creating everything on the customer behalf
     pub customer: AccountInfo<'info>,
     #[account(
         init,
-        payer = admin,
+        payer = restaurant_admin,
         space = Customer::INIT_SPACE + 5,
         seeds = [b"customer", customer.key().as_ref()],
         bump
@@ -316,7 +316,7 @@ pub struct CustomerInit<'info> {
     pub customer_profile: Account<'info, Customer>,
     #[account(
         init,
-        payer = admin,
+        payer = restaurant_admin,
         seeds = [b"member_nft", customer.key().as_ref(), restaurant.key().as_ref()],
         bump,
         space = CustomerNft::INIT_SPACE + attributes.iter().map(|attr| attr.key.len() + attr.value.len()).sum::<usize>(),
@@ -347,13 +347,13 @@ pub struct CustomerInit<'info> {
     )]
     /// CHECK
     pub customer_mint_ata: AccountInfo<'info>,
-    /// CHECK
-    pub restaurant_mint: AccountInfo<'info>,
+    /// CHECK: this is ok because admin is setting up on owner behalf
+    #[account(mut)]
+    pub restaurant_owner: AccountInfo<'info>,
     #[account(
-        seeds = [b"restaurant", restaurant_mint.key().as_ref()],
-        bump
-    )]
-    /// CHECK: this is fine since we are hard coding the collection sysvar.
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )] 
     pub restaurant: Account<'info, Restaurant>,
     #[account(
         seeds = [b"protocol"],

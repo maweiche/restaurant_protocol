@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::{
     state::{
+        RestaurantAdmin,
         MenuItem,
         Protocol
     },
@@ -29,7 +30,7 @@ impl<'info> MenuInit<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
         
         self.menu_state.set_inner(MenuItem {
             sku,
@@ -63,7 +64,7 @@ impl<'info> MenuUpdate<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
         
         self.menu_state.active = active;
 
@@ -90,7 +91,7 @@ impl<'info> MenuRemove<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
     
         
         Ok(())
@@ -101,14 +102,19 @@ impl<'info> MenuRemove<'info> {
 #[instruction(username: String)]
 pub struct MenuInit<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub menu_item: SystemAccount<'info>,
     #[account(
         init,
-        payer = admin,
+        payer = restaurant_admin,
         space = MenuItem::INIT_SPACE + 5,
         seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
         bump
@@ -125,7 +131,12 @@ pub struct MenuInit<'info> {
 #[derive(Accounts)]
 pub struct MenuUpdate<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
@@ -147,14 +158,19 @@ pub struct MenuUpdate<'info> {
 #[derive(Accounts)]
 pub struct MenuRemove<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
     pub restaurant: AccountInfo<'info>,
     pub menu_item: SystemAccount<'info>,
     #[account(
         mut,
-        close = admin,
+        close = restaurant_admin,
         seeds = [b"menu_state", menu_item.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]

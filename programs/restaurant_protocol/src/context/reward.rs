@@ -1,5 +1,6 @@
 use crate::{
     state::{
+        RestaurantAdmin,
         Restaurant,
         Protocol,
         Reward,
@@ -66,6 +67,7 @@ impl<'info> RewardInit<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
+        require!(self.restaurant_admin_state.restaurant.key() == self.restaurant.key(), ProtocolError::UnauthorizedAdmin);
         
         self.reward.set_inner(
             Reward {
@@ -483,10 +485,22 @@ impl<'info> RewardAirdrop<'info> {
 #[derive(Accounts)]
 #[instruction(item: Pubkey)]
 pub struct RewardInit<'info> {
+    /// CHECK: this is ok because admin is setting up on owner behalf
     #[account(mut)]
+    pub restaurant_owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )] 
     pub restaurant: Account<'info, Restaurant>,
     #[account(mut)]
     pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(
         init,
         payer = restaurant_admin,
@@ -522,10 +536,22 @@ pub struct RewardInit<'info> {
 
 #[derive(Accounts)]
 pub struct RewardRemove<'info> {
+    /// CHECK: this is ok because admin is setting up on owner behalf
     #[account(mut)]
+    pub restaurant_owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )] 
     pub restaurant: Account<'info, Restaurant>,
     #[account(mut)]
     pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(
         mut,
         close = restaurant_admin,
@@ -543,7 +569,14 @@ pub struct RewardRemove<'info> {
 
 #[derive(Accounts)]
 pub struct RewardBuy<'info> {
+    /// CHECK: this is ok because admin is setting up on owner behalf
     #[account(mut)]
+    pub restaurant_owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )] 
     pub restaurant: Account<'info, Restaurant>,
     #[account(mut)]
     pub customer: Signer<'info>,
@@ -602,10 +635,22 @@ pub struct RewardBuy<'info> {
 
 #[derive(Accounts)]
 pub struct RewardAirdrop<'info> {
+    /// CHECK: this is ok because admin is setting up on owner behalf
     #[account(mut)]
+    pub restaurant_owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )] 
     pub restaurant: Account<'info, Restaurant>,
     #[account(mut)]
     pub restaurant_admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
+        bump
+    )]
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     /// CHECK: this is ok since it is restaurant_admin minting/sending nft
     #[account(mut)]
     pub customer: AccountInfo<'info>,

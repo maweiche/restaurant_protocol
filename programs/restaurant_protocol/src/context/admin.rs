@@ -140,7 +140,9 @@ pub struct AdminInit<'info> {
         bump
     )]
     pub admin_state: Option<Account<'info, Admin>>,
-    pub new_admin: SystemAccount<'info>,
+    #[account(mut)]
+    /// CHECK: this is ok because admin is setting up on owner behalf
+    pub new_admin: AccountInfo<'info>,
     #[account(
         init,
         payer = admin,

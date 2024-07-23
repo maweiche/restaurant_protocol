@@ -174,7 +174,7 @@ pub struct RestaurantClose<'info> {
     #[account(
         mut,
         close = admin,
-        seeds = [b"restaurant", restaurant.key().as_ref()],
+        seeds = [b"restaurant", owner.key().as_ref()],
         bump,
     )] 
     pub restaurant: Account<'info, Restaurant>,

@@ -1,11 +1,10 @@
 use anchor_lang::prelude::*;
 use crate::{
     state::{
-        Admin,
+        RestaurantAdmin,
         Employee,
         Protocol
     },
-    constant,
     errors::{SetupError, ProtocolError},
 };
 
@@ -25,7 +24,7 @@ impl<'info> EmployeeInit<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.restaurant_admin_state.is_some() || self.restaurant_admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
         
         self.employee_state.set_inner(Employee {
             publickey: self.employee.key(),
@@ -57,7 +56,7 @@ impl<'info> EmployeeRemove<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.restaurant.key() == *self.restaurant.key, SetupError::Unauthorized);
     
         
         Ok(())
@@ -73,7 +72,7 @@ pub struct EmployeeInit<'info> {
         seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
-    pub restaurant_admin_state: Option<Account<'info, Admin>>,
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     pub employee: SystemAccount<'info>,
     #[account(
         init,
@@ -101,15 +100,15 @@ pub struct EmployeeRemove<'info> {
     pub employee: AccountInfo<'info>,
     #[account(
         mut,
-        close = admin, // this is where the account rent funds will be sent to after the admin is removed
-        seeds = [b"admin_state", admin.key().as_ref(), restaurant.key().as_ref()],
+        close = restaurant_admin, // this is where the account rent funds will be sent to after the admin is removed
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
-    pub restaurant_admin_state: Account<'info, Admin>,
+    pub restaurant_admin_state: Account<'info, RestaurantAdmin>,
     #[account(mut)]
     /// CHECK
-    restaurant: AccountInfo<'info>,
-    pub admin: Signer<'info>,
+    pub restaurant: AccountInfo<'info>,
+    pub restaurant_admin: Signer<'info>,
     #[account(
         seeds = [b"protocol"],
         bump,
