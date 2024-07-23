@@ -1,18 +1,6 @@
 use {
     anchor_lang::prelude::*,
-    anchor_spl::{
-        token_2022::{
-            Token2022, 
-            spl_token_2022::{
-                instruction::AuthorityType,
-                state::Account as TokenAccount,
-                extension::StateWithExtensions,
-            }},
-        associated_token::{AssociatedToken, Create, create},
-        token::Token,  
-        token_interface::{MintTo, mint_to, set_authority, SetAuthority},
-    },
-    solana_program::{system_instruction, program::invoke},
+    anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer},
 };
 use crate::{
     state::{
@@ -44,23 +32,19 @@ impl<'info> OrderInit<'info> {
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
 
-        let amount_in_lamports = total as u64 * 1000000000;
-        let transfer_instruction = system_instruction::transfer(
-            &self.customer.key(),
-            &self.restaurant.owner.key(),
-            amount_in_lamports,
-        );
-
-        invoke(
-            &transfer_instruction,
-            &[
-                self.customer.to_account_info(),
-                self.restaurant_owner.to_account_info(),
-                self.system_program.to_account_info(),
-            ],
+        transfer(
+            CpiContext::new(
+                self.token_program.to_account_info(),
+                Transfer {
+                    from: self.customer_currency_ata.to_account_info(),
+                    to: self.restaurant_owner_currency_ata.to_account_info(),
+                    authority: self.customer.to_account_info(),
+                }
+            ),
+            (total * (10u64.pow(self.currency.decimals as u32) as f32)) as u64,
         )?;
 
-        let new_reward_amount = (total * 10.0) + self.customer_nft.reward_points as f32;
+        let new_reward_amount = ((total * 10.0) as u64) + self.customer_nft.reward_points;
 
         self.customer_nft.reward_points = new_reward_amount as u64;
         
@@ -153,12 +137,29 @@ impl<'info> OrderClose<'info> {
 pub struct OrderInit<'info> {
     #[account(mut)]
     /// CHECK
-    pub restaurant: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK
     pub restaurant_owner: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump,
+    )]
+    /// CHECK
+    pub restaurant: AccountInfo<'info>,
+    pub currency: Account<'info, Mint>,
+    #[account(
+        mut,
+        associated_token::mint = currency,
+        associated_token::authority = restaurant_owner,
+    )]
+    pub restaurant_owner_currency_ata: Account<'info, TokenAccount>,
     #[account(mut)]
     pub customer: Signer<'info>,
+    #[account(
+        mut,
+        associated_token::mint = currency,
+        associated_token::authority = customer,
+    )]
+    pub customer_currency_ata: Account<'info, TokenAccount>,
     #[account(
         seeds = [b"customer", customer.key().as_ref(), restaurant.key().as_ref()],
         bump,
@@ -185,6 +186,7 @@ pub struct OrderInit<'info> {
         bump,
     )]
     pub protocol: Account<'info, Protocol>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 

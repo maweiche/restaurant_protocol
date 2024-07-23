@@ -27,12 +27,13 @@ pub struct Restaurant {
     pub name: String,
     pub symbol: String,
     pub owner: Pubkey,
+    pub currency: Pubkey,
     pub url: String,
     pub customer_count: u32,
 }
 
 impl Space for Restaurant {
-    const INIT_SPACE: usize = 8 + 32 + 4 + 32 + 4 + 32 + 4 + 32 + 4 + 4;
+    const INIT_SPACE: usize = 8 + 32 + 4 + 32 + 4 + 32 + 4 + 32 + 32+ 4 + 4;
 }
 
 #[account]

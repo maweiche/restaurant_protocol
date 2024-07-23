@@ -184,8 +184,10 @@ pub struct RestaurantAdminInit<'info> {
     #[account(mut)]
     pub restaurant_owner: Signer<'info>,
     #[account(mut)]
+    /// CHECK: this is ok because we are checking the seeds and bump in the program
     pub restaurant: AccountInfo<'info>,
     #[account(mut)]
+    /// CHECK: this is ok because we are checking the seeds and bump in the program
     pub restaurant_admin: AccountInfo<'info>,
     #[account(
         init,
@@ -207,9 +209,15 @@ pub struct RestaurantAdminInit<'info> {
 pub struct RestaurantAdminRemove<'info> {
     #[account(mut)]
     pub restaurant_owner: Signer<'info>,
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"restaurant", restaurant_owner.key().as_ref()],
+        bump
+    )]
+    /// CHECK: this is ok because we are checking the seeds and bump in the program
     pub restaurant: AccountInfo<'info>,
     #[account(mut)]
+    /// CHECK: this is ok because we are checking the seeds and bump in the program
     pub restaurant_admin: AccountInfo<'info>,
     #[account(
         mut,

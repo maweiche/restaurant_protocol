@@ -19,6 +19,7 @@ impl<'info> RestaurantInit<'info> {
         reference: Pubkey,
         name: String,
         symbol: String,
+        currency: Pubkey,
         url: String,
         bumps: RestaurantInitBumps,
     ) -> Result<()> {
@@ -47,6 +48,7 @@ impl<'info> RestaurantInit<'info> {
                 name,
                 symbol,
                 owner: *self.owner.key,
+                currency,
                 url,
                 customer_count: 0,
             }
@@ -132,7 +134,7 @@ pub struct RestaurantInit<'info> {
     pub owner: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"restaurant", restaurant.key().as_ref()],
+        seeds = [b"restaurant", owner.key().as_ref()],
         bump,
         payer = admin,
         space = Restaurant::INIT_SPACE + 54 + url.len() + name.len() + symbol.len() + 4 + 4

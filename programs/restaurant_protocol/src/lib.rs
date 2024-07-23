@@ -34,9 +34,10 @@ pub mod restaurant_protocol {
         reference: Pubkey,
         name: String,
         symbol: String,
+        currency: Pubkey,
         url: String,
     ) -> Result<()> {
-        ctx.accounts.add(reference, name, symbol, url, ctx.bumps)
+        ctx.accounts.add(reference, name, symbol, currency, url, ctx.bumps)
     }
 
     pub fn initialize_restaurant_admin(ctx: Context<RestaurantAdminInit>, 

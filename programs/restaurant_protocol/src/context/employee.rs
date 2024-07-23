@@ -25,7 +25,7 @@ impl<'info> EmployeeInit<'info> {
         */
         
         require!(!self.protocol.locked, ProtocolError::ProtocolLocked);
-        require!(self.admin_state.is_some() || self.admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
+        require!(self.restaurant_admin_state.is_some() || self.restaurant_admin.key() == constant::multisig_wallet::id(), SetupError::Unauthorized);
         
         self.employee_state.set_inner(Employee {
             publickey: self.employee.key(),
@@ -68,16 +68,16 @@ impl<'info> EmployeeRemove<'info> {
 #[instruction(username: String)]
 pub struct EmployeeInit<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub restaurant_admin: Signer<'info>,
     #[account(
-        seeds = [b"admin_state", admin.key().as_ref(), restaurant.key().as_ref()],
+        seeds = [b"admin_state", restaurant_admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
-    pub admin_state: Option<Account<'info, Admin>>,
+    pub restaurant_admin_state: Option<Account<'info, Admin>>,
     pub employee: SystemAccount<'info>,
     #[account(
         init,
-        payer = admin,
+        payer = restaurant_admin,
         space = Employee::INIT_SPACE + 5,
         seeds = [b"employee_state", employee.key().as_ref(), restaurant.key().as_ref()],
         bump
@@ -105,7 +105,7 @@ pub struct EmployeeRemove<'info> {
         seeds = [b"admin_state", admin.key().as_ref(), restaurant.key().as_ref()],
         bump
     )]
-    pub admin_state: Account<'info, Admin>,
+    pub restaurant_admin_state: Account<'info, Admin>,
     #[account(mut)]
     /// CHECK
     restaurant: AccountInfo<'info>,
